@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -182,6 +182,30 @@ namespace Visual_Studio_Project_Cleaner
             }
         }
 
+        private async Task<List<VisualStudioTempFile>> GetFiles(string Path, bool ScanSubDirs, List<VisualStudioTempExtension> ExtensionsToSearch)
+        {
+            List<VisualStudioTempFile> TempFiles = new List<VisualStudioTempFile>();
+
+            var FileNames         = Directory.GetFiles(Path, "*", ScanSubDirs ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+            var EnabledExtensions = ExtensionsToSearch.Where(X => X.Enabled);
+
+            /*Can be optimized?*/
+            foreach (var FileName in FileNames)
+            {
+                foreach (var Extension in EnabledExtensions)
+                {
+                    if (Extension.Pattern.IsMatch(FileName))
+                    {
+                        //this.FileListDataGrid.Items.Add(new VisualStudioTempFile { Path = FileName, Size = new FileInfo(FileName).Length });
+                        TempFiles.Add(new VisualStudioTempFile { Path = FileName, Size = new FileInfo(FileName).Length });
+                        break;
+                    }
+                }
+            }
+
+            return TempFiles;
+        }
+
         private async void RefreshButton_Click(object sender, RoutedEventArgs e)
         {
             this.FileListDataGrid.Items.Clear();
@@ -189,30 +213,45 @@ namespace Visual_Studio_Project_Cleaner
             if (!Directory.Exists(PathBox.Text))
                 return;
 
+            string Path                   = PathBox.Text;
+            bool   ScanSubDirs            = ScanSubDirsCheckBox.IsEnabled;
+            var    FileExtensionsToSearch = this.FileExtensions.ToList();
+
+            if (!FileExtensionsToSearch.Any(X => X.Enabled))
+            {
+                await this.ShowMessageAsync("No filetypes selected", "Select a filetype in settings -> file types ");
+
+                this.SettingsFlyout.IsOpen = true;
+
+                return;
+            }
+
+            var Controller = await this.ShowProgressAsync("Scanning files...", "Please wait...");
+            Controller.SetIndeterminate();
+
             try
             {
-                var FileNames = Directory.GetFiles(PathBox.Text, "*", ScanSubDirsCheckBox.IsChecked == true ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
-                var EnabledExtensions = FileExtensions.Where(X => X._Enabled);
+                List<VisualStudioTempFile> TempFiles = await Task.Run(() => GetFiles(Path, ScanSubDirs, FileExtensionsToSearch));
 
-                /*Can be optimized?*/
-                foreach (var FileName in FileNames)
-                {
-                    foreach (var Extension in EnabledExtensions)
-                    {
-                        if (Extension.Pattern.IsMatch(FileName))
-                        {
-                            this.FileListDataGrid.Items.Add(new VisualStudioTempFile { Path = FileName, Size = new FileInfo(FileName).Length });
-
-                            break;
-                        }
-                    }
-                }
+                TempFiles.ForEach(X => this.FileListDataGrid.Items.Add(X));
 
                 this.FileStatus.Content = $"{this.FileListDataGrid.Items.Count} file(s) { Util.ConvertBytesToString(this.FileListDataGrid.Items.OfType<VisualStudioTempFile>().ToList().Sum(X => X.Size)) }";
+                
+                await Controller.CloseAsync();
             }
-            catch(UnauthorizedAccessException E)
+            catch ( Exception E )
             {
-                await this.ShowMessageAsync("Error", "Not enough permissions to access " + PathBox.Text);
+                if(Controller.IsOpen == true)
+                {
+                    await Controller.CloseAsync();
+                }
+
+                if (E is UnauthorizedAccessException)
+                {
+                    await this.ShowMessageAsync("Error", "Not enough permissions to access " + PathBox.Text);
+                }
+
+                this.FileStatus.Content = $"0 file(s) 0 bytes";
             }
         }
 

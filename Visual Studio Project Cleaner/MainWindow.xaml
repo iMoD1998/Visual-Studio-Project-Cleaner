@@ -190,7 +190,8 @@
             <Separator Visibility="{Binding ElementName=SelectedFilesStatus, Path=Visibility}"
                        Style="{StaticResource MahApps.Styles.Separator.StatusBar}" />
             <StatusBarItem x:Name="SelectedFilesStatus"
-                           Content="0 file(s) 0 bytes" />
+                           Content="0 file(s) 0 bytes"
+                           Visibility="Hidden"/>
         </StatusBar>
 
     </Grid>

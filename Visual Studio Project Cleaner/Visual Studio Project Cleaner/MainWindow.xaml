@@ -1,0 +1,197 @@
+﻿<mah:MetroWindow x:Class="Visual_Studio_Project_Cleaner.MainWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                 xmlns:local="clr-namespace:Visual_Studio_Project_Cleaner"
+                 xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+                 xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+                 mc:Ignorable="d"
+                 GlowBrush="{DynamicResource MahApps.Brushes.Accent}"
+                 ResizeMode="CanResizeWithGrip"
+                 WindowStartupLocation="CenterScreen"
+                 Title="Visual Studio Project Cleaner"
+                 Height="600"
+                 Width="1000">
+
+    <mah:MetroWindow.LeftWindowCommands>
+        <mah:WindowCommands>
+            <Button Click="GithubRepoClick">
+                <iconPacks:PackIconModern Width="22"
+                                          Height="22"
+                                          Kind="SocialGithubOctocat" />
+            </Button>
+        </mah:WindowCommands>
+    </mah:MetroWindow.LeftWindowCommands>
+
+    <mah:MetroWindow.RightWindowCommands>
+        <mah:WindowCommands>
+            <ToggleButton Content="Settings"
+                          IsChecked="{Binding ElementName=SettingsFlyout, Path=IsOpen}">
+                <ToggleButton.ContentTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconMaterial Width="22"
+                                                        Height="22"
+                                                        VerticalAlignment="Center"
+                                                        Kind="Tune" />
+                            <TextBlock Margin="4 0 0 0"
+                                       VerticalAlignment="Center"
+                                       Text="{Binding}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ToggleButton.ContentTemplate>
+            </ToggleButton>
+        </mah:WindowCommands>
+    </mah:MetroWindow.RightWindowCommands>
+
+    <mah:MetroWindow.Flyouts>
+        <mah:FlyoutsControl>
+            <mah:Flyout x:Name="SettingsFlyout"
+                        Header="Settings"
+                        Position="Right"
+                        Width="400">
+                <Grid Margin="20, 20, 20, 20">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <GroupBox Header="File Types"
+                              Grid.Row="0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <CheckBox x:Name="AllFileTypes"
+                                      Content="Select All"
+                                      Grid.Row="0"
+                                      Checked="AllFileTypes_CheckedChanged"
+                                      Unchecked="AllFileTypes_CheckedChanged"
+                                      Margin="5" />
+                            <ListBox Name="FileTypesListBox"
+                                     ItemsSource="{Binding FileExtensions}"
+                                     Grid.Row="1">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox Name="FileExtensionCheckbox"
+                                                  Content="{Binding Text}"
+                                                  IsChecked="{Binding Enabled}"
+                                                  Checked="FileExtensionCheckbox_CheckedChanged"
+                                                  Unchecked="FileExtensionCheckbox_CheckedChanged" />
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Grid>
+                    </GroupBox>
+
+                    <CheckBox Margin="10" Grid.Row="1" Name="ScanSubDirsCheckBox" Content="Scan Subdirectories" IsChecked="True" />
+                </Grid>
+            </mah:Flyout>
+        </mah:FlyoutsControl>
+    </mah:MetroWindow.Flyouts>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="0" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <TextBox Grid.Column="0"
+                         x:Name="PathBox"
+                         Height="23"
+                         TextWrapping="Wrap"
+                         mah:TextBoxHelper.ButtonCommand="{Binding BrowseFileCommand}"
+                         mah:TextBoxHelper.Watermark="Folder to scan"
+                         Style="{DynamicResource MahApps.Styles.TextBox.Button}"
+                         Margin="10, 10, 10, 5">
+                    <mah:TextBoxHelper.ButtonContent>
+                        <iconPacks:PackIconMaterial HorizontalAlignment="Center" Kind="Folder" />
+                    </mah:TextBoxHelper.ButtonContent>
+                </TextBox>
+
+                <Grid Grid.Column="2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Button x:Name="DeleteButton"
+                            Margin="10, 10, 10, 5"
+                            Grid.Column="0"
+                            VerticalAlignment="Top"
+                            Content="{iconPacks:MaterialDesign Kind=Delete}"
+                            Style="{DynamicResource MahApps.Styles.Button.Square}"
+                            Click="DeleteButton_Click" />
+                    <Button x:Name="RefreshButton"
+                            Margin="10, 10, 10, 5"
+                            Grid.Column="1"
+                            VerticalAlignment="Top"
+                            Content="{iconPacks:MaterialDesign Kind=Refresh}"
+                            Style="{DynamicResource MahApps.Styles.Button.Square}"
+                            Click="RefreshButton_Click" />
+                </Grid>
+            </Grid>
+        </StackPanel>
+
+        <DataGrid Grid.Row="1"
+                  x:Name="FileListDataGrid"
+                  VerticalAlignment="Stretch"
+                  Margin="10, 10, 10, 10"
+                  AutoGenerateColumns="False"
+                  BorderBrush="{DynamicResource MahApps.Brushes.Accent}"
+                  SelectionChanged="FileListDataGrid_SelectionChanged"
+                  IsReadOnly="True">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="File"
+                                    Binding="{Binding Path}"
+                                    Width="*" />
+                <DataGridTextColumn Header="Size"
+                                    Binding="{Binding SizeString}"
+                                    Width="100"
+                                    SortMemberPath="Size" />
+            </DataGrid.Columns>
+            <DataGrid.ContextMenu>
+                <ContextMenu x:Name="DataGridContextMenu"
+                             IsEnabled="False">
+                    <MenuItem x:Name="CopyPathMenuItem"
+                              Header="Copy Path"
+                              Click="CopyPathMenuItem_Click">
+                        <MenuItem.Icon>
+                            <iconPacks:PackIconMaterial HorizontalAlignment="Center"
+                                                        Kind="ContentCopy" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem x:Name="ViewInExplorerMenuItem"
+                              Header="View In Explorer"
+                              Click="ViewInExplorerMenuItem_Click">
+                        <MenuItem.Icon>
+                            <iconPacks:PackIconMaterial HorizontalAlignment="Center"
+                                                        Kind="Folder" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+                </ContextMenu>
+            </DataGrid.ContextMenu>
+        </DataGrid>
+
+        <StatusBar Grid.Row="2">
+            <StatusBarItem>Idle</StatusBarItem>
+            <Separator Style="{StaticResource MahApps.Styles.Separator.StatusBar}" />
+            <StatusBarItem x:Name="FileStatus"
+                           Content="0 file(s) 0 bytes" />
+            <Separator Visibility="{Binding ElementName=SelectedFilesStatus, Path=Visibility}"
+                       Style="{StaticResource MahApps.Styles.Separator.StatusBar}" />
+            <StatusBarItem x:Name="SelectedFilesStatus"
+                           Content="0 file(s) 0 bytes" />
+        </StatusBar>
+
+    </Grid>
+</mah:MetroWindow>

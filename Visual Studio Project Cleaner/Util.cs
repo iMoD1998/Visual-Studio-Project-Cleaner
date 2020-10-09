@@ -13,7 +13,7 @@ namespace Visual_Studio_Project_Cleaner
         public static string ConvertBytesToString(long Size)
         {
             if (Size == 0)
-                return "0.0 " + SizeSuffixes[0];
+                return "0 " + SizeSuffixes[0];
             ;
             int Magnitude = (int)Math.Log(Size, 1024);
             double AdjustedSize = (Size / Math.Pow(1024, Magnitude));

@@ -94,6 +94,7 @@ namespace Visual_Studio_Project_Cleaner
             if (FolderDialog.ShowDialog() == CommonFileDialogResult.Ok)
             {
                 this.PathBox.Text = FolderDialog.FileName;
+                this.RefreshButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             }
         }
 

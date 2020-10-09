@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -207,7 +207,6 @@ namespace Visual_Studio_Project_Cleaner
             {
                 try
                 {
-                    await Task.Delay(10);
 
                     Controller.SetProgress((double)CurrentIndex / (double)Files.Count());
                     Controller.SetMessage($"Deleting { TempFile.Path }");

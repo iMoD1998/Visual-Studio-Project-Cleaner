@@ -92,7 +92,7 @@ namespace Visual_Studio_Project_Cleaner
         {
             get
             {
-                return ConvertBytesToString(_Size);
+                return Util.ConvertBytesToString(_Size);
             }
         }
     }

@@ -212,9 +212,6 @@ namespace Visual_Studio_Project_Cleaner
                     Controller.SetProgress((double)CurrentIndex / (double)Files.Count());
                     Controller.SetMessage($"Deleting { TempFile.Path }");
 
-                    if (CurrentIndex % 10 == 0)
-                        throw new Exception("Fuckk off whore");
-
                     File.Delete(TempFile.Path);
                 }
                 catch (Exception E)

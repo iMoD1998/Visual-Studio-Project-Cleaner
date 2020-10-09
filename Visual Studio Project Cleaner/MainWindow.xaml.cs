@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -33,105 +33,12 @@ namespace Visual_Studio_Project_Cleaner
     /// </summary>
     public partial class MainWindow : MetroWindow
     {
-        static readonly string[] SizeSuffixes = { "bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB" };
-
-        public class VisualStudioTempExtension : INotifyPropertyChanged
+        public ICommand BrowseFileCommand
         {
-            public string _ExtensionFormat;
-            public string _Description;
-            public bool _Enabled;
-            public Regex _Pattern;
-
-            public string Text
-            {
-                get
-                {
-                    return _Description + " (" + _ExtensionFormat + ")";
-                }
-            }
-
-            public string ExtensionFormat
-            {
-                get { return _ExtensionFormat; }
-                set {
-                    _ExtensionFormat = value;
-                    NotifyPropertyChanged();
-                }
-            }
-
-            public string Description
-            {
-                get { return _Description; }
-                set {
-                    _Description = value;
-                    NotifyPropertyChanged();
-                }
-            }
-            public bool Enabled
-            {
-                get { return _Enabled; }
-                set {
-                    _Enabled = value;
-                    NotifyPropertyChanged();
-                }
-            }
-
-            public Regex Pattern
-            {
-                get { return _Pattern; }
-                set {
-                    _Pattern = value;
-                    NotifyPropertyChanged();
-                }
-            }
-
-            public event PropertyChangedEventHandler PropertyChanged;
-
-            private void NotifyPropertyChanged(String PropertyName = "")
-            {
-                if (PropertyChanged != null)
-                    PropertyChanged(this, new PropertyChangedEventArgs(PropertyName));
-            }
+            get { return new RelayCommand(BrowseFileAction); }
         }
 
         public ObservableCollection<VisualStudioTempExtension> FileExtensions { get; set; }
-
-        static string ConvertBytesToString(long Size)
-        {
-            if (Size == 0)
-                return "0.0 " + SizeSuffixes[0];
-            ;
-            int Magnitude = (int)Math.Log(Size, 1024);
-            double AdjustedSize = (Size / Math.Pow(1024, Magnitude));
-
-            return string.Format("{0:n2} {1}", AdjustedSize, SizeSuffixes[Magnitude]);
-        }
-
-        public class VisualStudioTempFile
-        {
-            string _Path;
-            long _Size;
-
-            public string Path
-            {
-                get { return _Path; }
-                set { _Path = value; }
-            }
-
-            public long Size
-            {
-                get { return _Size; }
-                set { _Size = value; }
-            }
-
-            public string SizeString
-            {
-                get
-                {
-                    return ConvertBytesToString(_Size);
-                }
-            }
-        }
 
         public MainWindow()
         {
@@ -169,11 +76,6 @@ namespace Visual_Studio_Project_Cleaner
             this.DataContext = this;
         }
 
-        public ICommand BrowseFileCommand
-        {
-            get { return new RelayCommand(BrowseFileAction); }
-        }
-
         private void BrowseFileAction(object obj)
         {
             var FolderDialog = new CommonOpenFileDialog();
@@ -207,7 +109,6 @@ namespace Visual_Studio_Project_Cleaner
             {
                 try
                 {
-
                     Controller.SetProgress((double)CurrentIndex / (double)Files.Count());
                     Controller.SetMessage($"Deleting { TempFile.Path }");
 
@@ -234,15 +135,15 @@ namespace Visual_Studio_Project_Cleaner
 
                 if(UserInput == MessageDialogResult.Affirmative)
                 {
-                    var ItemsToDelete = this.FileListDataGrid.SelectedItems.OfType<VisualStudioTempFile>().ToList();
-                    var TotalSize = ItemsToDelete.Sum(X => X.Size);
-                    var FailedDeletions = await DeleteItems(ItemsToDelete);
-                    var TotalDeletedSize = TotalSize - FailedDeletions.Sum(X => X.Item1.Size);
+                    var ItemsToDelete     = this.FileListDataGrid.SelectedItems.OfType<VisualStudioTempFile>().ToList();
+                    var TotalSize         = ItemsToDelete.Sum(X => X.Size);
+                    var FailedDeletions   = await DeleteItems(ItemsToDelete);
+                    var TotalDeletedSize  = TotalSize - FailedDeletions.Sum(X => X.Item1.Size);
                     var TotalDeletedFiles = ItemsToDelete.Count() - FailedDeletions.Count();
 
                     if (FailedDeletions.Count() == 0)
                     {
-                        await this.ShowMessageAsync("Success", $"Deleted { TotalDeletedFiles } file(s) saving { ConvertBytesToString(TotalDeletedSize) }");
+                        await this.ShowMessageAsync("Success", $"Deleted { TotalDeletedFiles } file(s) saving { Util.ConvertBytesToString(TotalDeletedSize) }");
                     }
                     else
                     {
@@ -269,7 +170,7 @@ namespace Visual_Studio_Project_Cleaner
 
                     if (FailedDeletions.Count() == 0)
                     {
-                        await this.ShowMessageAsync("Success", $"Deleted { TotalDeletedFiles } file(s) saving { ConvertBytesToString(TotalDeletedSize) }");
+                        await this.ShowMessageAsync("Success", $"Deleted { TotalDeletedFiles } file(s) saving { Util.ConvertBytesToString(TotalDeletedSize) }");
                     }
                     else
                     {
@@ -305,41 +206,7 @@ namespace Visual_Studio_Project_Cleaner
                 }
             }
 
-            this.FileStatus.Content = $"{this.FileListDataGrid.Items.Count} file(s) { ConvertBytesToString(this.FileListDataGrid.Items.OfType<VisualStudioTempFile>().ToList().Sum(X => X.Size)) }";
-        }
-
-        bool AllFileTypesCheckboxIgnoreEvent = false;
-        bool FileExtensionCheckboxIgnoreEvent = false;
-
-        private void AllFileTypes_CheckedChanged(object sender, RoutedEventArgs e)
-        {
-            if (AllFileTypesCheckboxIgnoreEvent)
-                return;
-
-            var ShouldCheck = this.AllFileTypes.IsChecked == true;
-
-            FileExtensionCheckboxIgnoreEvent = true;
-
-            foreach (var Item in FileExtensions)
-            {
-                Item.Enabled = ShouldCheck;
-            }
-
-            FileExtensionCheckboxIgnoreEvent = false;
-        }
-
-        private void FileExtensionCheckbox_CheckedChanged(object sender, RoutedEventArgs e)
-        {
-            if (FileExtensionCheckboxIgnoreEvent)
-                return;
-
-            AllFileTypesCheckboxIgnoreEvent = true;
-
-            var SenderCheckbox = sender as CheckBox;
-
-            this.AllFileTypes.IsChecked = FileExtensions.All(X => X.Enabled == true);
-
-            AllFileTypesCheckboxIgnoreEvent = false;
+            this.FileStatus.Content = $"{this.FileListDataGrid.Items.Count} file(s) { Util.ConvertBytesToString(this.FileListDataGrid.Items.OfType<VisualStudioTempFile>().ToList().Sum(X => X.Size)) }";
         }
 
         private void FileListDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -356,7 +223,7 @@ namespace Visual_Studio_Project_Cleaner
                     TotalSize += File.Size;
                 }
 
-                this.SelectedFilesStatus.Content = $"{this.FileListDataGrid.SelectedItems.Count} file(s) selected { ConvertBytesToString(TotalSize) }";
+                this.SelectedFilesStatus.Content = $"{this.FileListDataGrid.SelectedItems.Count} file(s) selected { Util.ConvertBytesToString(TotalSize) }";
             }
             else
             {
@@ -408,11 +275,46 @@ namespace Visual_Studio_Project_Cleaner
             {
                 var UserSelect = await this.ShowMessageAsync("Are you sure?", $"Are you sure you want to open { this.FileListDataGrid.SelectedItems.Count } explorers", MessageDialogStyle.AffirmativeAndNegative);
 
-                if(UserSelect == MessageDialogResult.Affirmative)
+                if (UserSelect == MessageDialogResult.Affirmative)
                 {
                     this.FileListDataGrid.SelectedItems.OfType<VisualStudioTempFile>().ToList().ForEach(X => OpenFileFolder(X.Path));
                 }
             }
+        }
+
+        bool AllFileTypesCheckboxIgnoreEvent = false;
+
+        private void AllFileTypes_CheckedChanged(object sender, RoutedEventArgs e)
+        {
+            if (AllFileTypesCheckboxIgnoreEvent)
+                return;
+
+            var ShouldCheck = this.AllFileTypes.IsChecked == true;
+
+            FileExtensionCheckboxIgnoreEvent = true;
+
+            foreach (var Item in FileExtensions)
+            {
+                Item.Enabled = ShouldCheck;
+            }
+
+            FileExtensionCheckboxIgnoreEvent = false;
+        }
+
+        bool FileExtensionCheckboxIgnoreEvent = false;
+
+        private void FileExtensionCheckbox_CheckedChanged(object sender, RoutedEventArgs e)
+        {
+            if (FileExtensionCheckboxIgnoreEvent)
+                return;
+
+            AllFileTypesCheckboxIgnoreEvent = true;
+
+            var SenderCheckbox = sender as CheckBox;
+
+            this.AllFileTypes.IsChecked = FileExtensions.All(X => X.Enabled == true);
+
+            AllFileTypesCheckboxIgnoreEvent = false;
         }
 
         private void GithubRepoClick(object sender, RoutedEventArgs e)

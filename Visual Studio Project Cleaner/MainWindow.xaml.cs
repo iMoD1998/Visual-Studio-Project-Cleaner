@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -131,7 +131,7 @@ namespace Visual_Studio_Project_Cleaner
         {
             if (this.FileListDataGrid.SelectedItems.Count > 0)
             {
-                var UserInput = await this.ShowMessageAsync("Are you sure?", $"Are you sure you want to delete {this.FileListDataGrid.Items.Count} selected file(s)", MessageDialogStyle.AffirmativeAndNegative);
+                var UserInput = await this.ShowMessageAsync("Are you sure?", $"Are you sure you want to delete {this.FileListDataGrid.SelectedItems.Count} selected file(s)", MessageDialogStyle.AffirmativeAndNegative);
 
                 if(UserInput == MessageDialogResult.Affirmative)
                 {

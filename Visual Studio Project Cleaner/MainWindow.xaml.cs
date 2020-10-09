@@ -182,31 +182,38 @@ namespace Visual_Studio_Project_Cleaner
             }
         }
 
-        private void RefreshButton_Click(object sender, RoutedEventArgs e)
+        private async void RefreshButton_Click(object sender, RoutedEventArgs e)
         {
             this.FileListDataGrid.Items.Clear();
 
             if (!Directory.Exists(PathBox.Text))
                 return;
 
-            var FileNames         = Directory.GetFiles(PathBox.Text, "*", ScanSubDirsCheckBox.IsChecked == true ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
-            var EnabledExtensions = FileExtensions.Where(X => X._Enabled);
-
-            /*Can be optimized?*/
-            foreach (var FileName in FileNames)
+            try
             {
-                foreach (var Extension in EnabledExtensions)
+                var FileNames = Directory.GetFiles(PathBox.Text, "*", ScanSubDirsCheckBox.IsChecked == true ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+                var EnabledExtensions = FileExtensions.Where(X => X._Enabled);
+
+                /*Can be optimized?*/
+                foreach (var FileName in FileNames)
                 {
-                    if (Extension.Pattern.IsMatch(FileName))
+                    foreach (var Extension in EnabledExtensions)
                     {
-                        this.FileListDataGrid.Items.Add(new VisualStudioTempFile { Path = FileName, Size = new FileInfo(FileName).Length });
-                        
-                        break;
+                        if (Extension.Pattern.IsMatch(FileName))
+                        {
+                            this.FileListDataGrid.Items.Add(new VisualStudioTempFile { Path = FileName, Size = new FileInfo(FileName).Length });
+
+                            break;
+                        }
                     }
                 }
-            }
 
-            this.FileStatus.Content = $"{this.FileListDataGrid.Items.Count} file(s) { Util.ConvertBytesToString(this.FileListDataGrid.Items.OfType<VisualStudioTempFile>().ToList().Sum(X => X.Size)) }";
+                this.FileStatus.Content = $"{this.FileListDataGrid.Items.Count} file(s) { Util.ConvertBytesToString(this.FileListDataGrid.Items.OfType<VisualStudioTempFile>().ToList().Sum(X => X.Size)) }";
+            }
+            catch(UnauthorizedAccessException E)
+            {
+                await this.ShowMessageAsync("Error", "Not enough permissions to access " + PathBox.Text);
+            }
         }
 
         private void FileListDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
